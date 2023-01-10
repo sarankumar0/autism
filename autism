@@ -1,0 +1,567 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from scipy import stats
+import seaborn as sns
+
+import plotly.io as pio
+import plotly.express as px
+import plotly.figure_factory as ff
+import plotly.graph_objects as go
+from sklearn.preprocessing import LabelEncoder
+
+from plotly.subplots import make_subplots
+from plotly.offline import init_notebook_mode, iplot
+
+init_notebook_mode(connected=True)
+pio.templates.default = "none"
+
+import warnings
+warnings.filterwarnings('ignore')
+
+
+PATH = '/kaggle/input/authism'
+train = pd.read_csv("/kaggle/input/authism/train.csv")
+test = pd.read_csv("/kaggle/input/authism/test.csv")
+sample_submission = pd.read_csv(PATH + "/sample_submission.csv")
+
+
+
+
+
+#cell to
+display(train.shape)
+display(test.shape)
+
+
+
+
+#cell to
+display(train.isna().sum().sum())
+display(test.isna().sum().sum())
+
+
+
+
+
+#cell to
+# fix the spelling issue 
+train = train.rename(columns = {'austim': 'autism', 'contry_of_res':'country_of_res'}, errors="raise")
+test = test.rename(columns = {'austim': 'autism', 'contry_of_res':'country_of_res'}, errors="raise")
+​
+# fix the other/Other capitalization
+train['country_of_res'][train['country_of_res'] == 'others'] = 'Others'
+test['country_of_res'][test['country_of_res'] == 'others'] = 'Others'
+​
+train['ethnicity'][train['ethnicity'] == 'others'] = 'Others'
+test['ethnicity'][test['ethnicity'] == 'others'] = 'Others'
+
+
+
+
+#cell to
+# drop un-important cols
+train.drop(['ID', 'age_desc'], axis=1, inplace=True)
+test.drop(['ID', 'age_desc'], axis=1, inplace=True)
+
+cat_cols = [col for col in traizn.columns if train[col].dtype == 'object']
+num_cols = [col for col in train.columns if train[col].dtype == 'int'][0:-1]
+
+ASD_pos = train[train['Class/ASD']==1
+
+
+
+
+#cell to
+train['country_of_res'].unique()
+
+
+
+
+#cell to
+label = ['ASD Positive (=1)', 'ASD Negative (=0)']
+value = [ASD_pos.shape[0], ASD_neg.shape[0]] 
+pct = [value[0]*100/len(train), value[1]*100/len(train)]
+
+
+fig = go.Figure(data=[go.Bar(
+            y=value, x=label,
+            text=(np.round(pct,2)),
+            textposition=['outside', 'inside'],
+            texttemplate = ["<b style='color: #f'>%{text}%</b>"]*2,
+            textfont=dict(  family="sans serif",
+                            size=16,
+                            color="black"),
+            orientation='v',
+            marker_color=['purple', 'lightsalmon'],
+            opacity=1.0,
+                    )])
+fig.update_layout(title='<b>Target: ASD Class <b>', 
+                  font_family="San Serif",
+                  template= 'simple_white',
+                  yaxis_linewidth=2.5,
+                  width=600, 
+                  height=400,
+                  bargap=0.2,
+                  barmode='group',
+                  titlefont={'size': 20},
+                  )
+fig.update_xaxes(showgrid=False, showline=True)
+fig.update_yaxes(showgrid=False, showline=False, showticklabels=False, ticks='')
+fig.show()
+
+
+
+
+#cell to
+
+for col in cat_cols:
+    x = train[col].nunique() 
+    y = test[col].nunique()
+    print("{}: train {} unique, test {} unique".format(col, x, y))
+    
+    
+    
+    
+    
+#cell to
+fig = go.Figure()
+fig.add_trace(go.Histogram(x=ASD_pos['gender'],histnorm='percent',
+              name='ASD_pos', marker_color = 'purple'),
+              )
+fig.add_trace(go.Histogram(x=ASD_neg['gender'],histnorm='percent',
+              name='ASD_neg', marker_color = 'salmon', opacity=0.85),
+             )  
+
+fig.update_layout(title="Gender of the patient", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  template='simple_white',
+                  width=600, 
+                  height=400,
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.20, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending')
+fig.show()
+
+
+
+
+#cell to
+fig = px.histogram(train, x="ethnicity",
+                   width=600, 
+                   height=400,
+                   histnorm='percent',
+                   template="simple_white"
+                   )
+
+fig.update_layout(title="Ethnic group of the patient", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending') # ordering the x-axis values
+#custom color
+colors = ['lightgray',] * 15  
+colors[1] = 'crimson' 
+colors[0] = 'lightseagreen' 
+
+
+fig.update_traces(marker_color=colors, 
+                )
+fig.show()
+
+fig = go.Figure()
+fig.add_trace(go.Histogram(x=ASD_pos['ethnicity'],histnorm='percent',
+              name='ASD_pos', marker_color = 'purple'),
+              )
+fig.add_trace(go.Histogram(x=ASD_neg['ethnicity'],histnorm='percent',
+              name='ASD_neg', marker_color = 'salmon', opacity=0.85),
+             )  
+
+fig.update_layout(title="Ethnic group of the patient", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  template='simple_white',
+                  width=600, 
+                  height=400,
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending')
+                 
+                 
+                 
+#cell to                 
+
+fig.show()
+fig = go.Figure()
+fig.add_trace(go.Histogram(x=ASD_pos['jaundice'],histnorm='',
+              name='ASD_pos', marker_color = 'purple'),
+              )
+fig.add_trace(go.Histogram(x=ASD_neg['jaundice'],histnorm='',
+              name='ASD_neg', marker_color = 'salmon', opacity=0.85),
+             )  
+
+fig.update_layout(title="Whether the patient had jaundice at the time of birth", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  template='simple_white',
+                  width=600, 
+                  height=400,
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending') 
+
+fig.show()
+
+
+
+
+#cell to
+fig = go.Figure()
+fig.add_trace(go.Histogram(x=ASD_pos['autism'],histnorm='',
+              name='ASD_pos', marker_color = 'purple'),
+              )
+fig.add_trace(go.Histogram(x=ASD_neg['autism'],histnorm='',
+              name='ASD_neg', marker_color = 'salmon', opacity=0.85),
+             )  
+
+fig.update_layout(title="Whether an immediate family member has been diagnosed with autism", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  template='simple_white',
+                  width=600, 
+                  height=400,
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending') 
+
+fig.show()
+
+
+
+
+#cell to
+fig = px.histogram(train, x="country_of_res", 
+                   width=900, 
+                   height=400,
+                   histnorm='percent',
+                   template="simple_white")
+fig.update_layout(title="<b> Country of Residence of the patient <b>", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending') 
+
+colors = ['lightgray',] * 100 
+colors[0] = 'lightseagreen' 
+
+fig.update_traces(marker_color=colors, 
+                 ).update_xaxes(categoryorder='total descending')
+                   
+fig.show()
+
+fig = px.treemap(train, path=['country_of_res','Class/ASD'], color='Class/ASD',
+                 color_continuous_scale='teal',               
+)
+
+fig.update_layout(#title="<b> Country of Residence of the patient<b>",
+                  titlefont={'size': 20, 'family': "San Serif"},
+                  height=500, width=1000,
+                  template='simple_white',
+                  autosize=False,
+                  margin=dict(l=50,r=50,b=50, t=250,
+                             ),
+                 )
+fig.update_layout(margin = dict(t=50, l=50, r=50, b=100))
+fig.show()
+
+
+
+
+#cell to
+fig = go.Figure()
+
+fig.add_trace(go.Histogram(x=ASD_pos['used_app_before'],histnorm='',
+              name='ASD_pos', marker_color = 'purple'),
+              )
+fig.add_trace(go.Histogram(x=ASD_neg['used_app_before'],histnorm='',
+              name='ASD_neg', marker_color = 'salmon', opacity=0.85),
+             )    
+fig.update_layout(barmode='group')
+fig.update_layout(title="Whether the patient has undergone a screening test before", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  template='simple_white',
+                  width=600, 
+                  height=400,
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending') 
+
+fig.show()
+
+
+
+
+
+#cell to
+fig = go.Figure()
+
+fig.add_trace(go.Histogram(x=ASD_pos['relation'],histnorm='',
+              name='ASD_pos', marker_color = 'purple'),
+              )
+fig.add_trace(go.Histogram(x=ASD_neg['relation'],histnorm='',
+              name='ASD_neg', marker_color = 'salmon', opacity=0.85),
+             )    
+fig.update_layout(barmode='group')
+fig.update_layout(title="Relation of patient who completed the test", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  template='simple_white',
+                  width=600, 
+                  height=400,
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending') 
+
+fig.show()
+
+
+
+
+#cell to
+fig = go.Figure()
+
+fig.add_trace(go.Histogram(x=ASD_pos['relation'],histnorm='',
+              name='ASD_pos', marker_color = 'purple'),
+              )
+fig.add_trace(go.Histogram(x=ASD_neg['relation'],histnorm='',
+              name='ASD_neg', marker_color = 'salmon', opacity=0.85),
+             )    
+fig.update_layout(barmode='group')
+fig.update_layout(title="Relation of patient who completed the test", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  template='simple_white',
+                  width=600, 
+                  height=400,
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending') 
+
+fig.show()
+
+
+
+
+#cell to
+fig = go.Figure()
+
+fig.add_trace(go.Histogram(x=ASD_pos['relation'],histnorm='',
+              name='ASD_pos', marker_color = 'purple'),
+              )
+fig.add_trace(go.Histogram(x=ASD_neg['relation'],histnorm='',
+              name='ASD_neg', marker_color = 'salmon', opacity=0.85),
+             )    
+fig.update_layout(barmode='group')
+fig.update_layout(title="Relation of patient who completed the test", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  template='simple_white',
+                  width=600, 
+                  height=400,
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending') 
+
+fig.show()
+
+
+
+
+#cell to
+fig = go.Figure()
+
+fig.add_trace(go.Histogram(x=ASD_pos['relation'],histnorm='',
+              name='ASD_pos', marker_color = 'purple'),
+              )
+fig.add_trace(go.Histogram(x=ASD_neg['relation'],histnorm='',
+              name='ASD_neg', marker_color = 'salmon', opacity=0.85),
+             )    
+fig.update_layout(barmode='group')
+fig.update_layout(title="Relation of patient who completed the test", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  template='simple_white',
+                  width=600, 
+                  height=400,
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending') 
+
+fig.show()
+
+
+
+
+#cell to
+fig = go.Figure()
+
+fig.add_trace(go.Histogram(x=ASD_pos['relation'],histnorm='',
+              name='ASD_pos', marker_color = 'purple'),
+              )
+fig.add_trace(go.Histogram(x=ASD_neg['relation'],histnorm='',
+              name='ASD_neg', marker_color = 'salmon', opacity=0.85),
+             )    
+fig.update_layout(barmode='group')
+fig.update_layout(title="Relation of patient who completed the test", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  template='simple_white',
+                  width=600, 
+                  height=400,
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending') 
+
+fig.show()
+
+
+
+
+#cell to
+fig = go.Figure()
+
+fig.add_trace(go.Histogram(x=ASD_pos['relation'],histnorm='',
+              name='ASD_pos', marker_color = 'purple'),
+              )
+fig.add_trace(go.Histogram(x=ASD_neg['relation'],histnorm='',
+              name='ASD_neg', marker_color = 'salmon', opacity=0.85),
+             )    
+fig.update_layout(barmode='group')
+fig.update_layout(title="Relation of patient who completed the test", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  template='simple_white',
+                  width=600, 
+                  height=400,
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending') 
+
+fig.show()
+
+
+
+
+#cell to
+fig = go.Figure()
+
+fig.add_trace(go.Histogram(x=ASD_pos['relation'],histnorm='',
+              name='ASD_pos', marker_color = 'purple'),
+              )
+fig.add_trace(go.Histogram(x=ASD_neg['relation'],histnorm='',
+              name='ASD_neg', marker_color = 'salmon', opacity=0.85),
+             )    
+fig.update_layout(barmode='group')
+fig.update_layout(title="Relation of patient who completed the test", 
+                  font_family="San Serif",
+                  titlefont={'size': 20},
+                  template='simple_white',
+                  width=600, 
+                  height=400,
+                  legend=dict(
+                  orientation="v", y=1, yanchor="top", x=1.0, xanchor="right" )                 
+                 ).update_xaxes(categoryorder='total descending') 
+
+fig.show()
+
+
+
+
+#cell to
+label_encoder = LabelEncoder()
+train_le = train.copy()
+test_le = test.copy()
+
+for col in cat_cols:
+        train_le[col] = label_encoder.fit_transform(train[col])
+        test_le[col] = label_encoder.fit_transform(test[col]) 
+        
+train = train_le
+test = test_le
+
+
+
+
+#cell to
+FEATURES = train.columns[0:-1]
+TARGET = train.columns[-1]
+
+X = train.loc[:, FEATURES]
+y = train.loc[:, TARGET]
+
+seed = 0
+fold = 5
+
+
+
+
+#cell to
+from sklearn.model_selection import StratifiedKFold
+def score(X, y, model, cv):
+    scoring = ["roc_auc"]
+    scores = cross_validate(
+        model, X, y, scoring=scoring, cv=cv, return_train_score=True,
+    )
+    scores = pd.DataFrame(scores).T
+    return scores.assign(
+        mean = lambda x: x.mean(axis=1),
+        std = lambda x: x.std(axis=1),
+    )
+
+skf = StratifiedKFold(n_splits=fold, shuffle=True, random_state=seed)
+
+
+
+
+#cell to
+from sklearn.model_selection import cross_validate
+from sklearn.linear_model import LogisticRegression
+model_lr = LogisticRegression(solver='saga', 
+                              tol=1e-5, max_iter=10000,
+                              random_state=0,
+                              C=0.22685190926977272,
+                              penalty='l2',
+                             )
+
+scores = score(X, y, model_lr, cv=skf)
+display(scores)
+
+
+
+
+#cell to
+
+import sklearn.metrics as metrics
+model_lr.fit(X, y)
+metrics.plot_roc_curve(model_lr, X, y)
+plt.title('Logistic regression: ROC_AUC curve')
+plt.show();
+
+
+
+#cell to
+y_pred_lr = pd.Series(
+    model_lr.predict_proba(test)[:, 1],
+    index=test.index,
+    name=TARGET,
+)
+sub = pd.DataFrame({'ID': sample_submission.ID, 'Class/ASD': y_pred_lr})
+sub.to_csv("submission_lr.csv", index=False)
+
+
+
+
